@@ -9,7 +9,6 @@ Layout quality evaluation tool ([demo](https://iVis-at-Bilkent.github.io/cytosca
 ## Dependencies
 
  * Cytoscape.js ^3.2.0
- * <List your dependencies here please>
 
 
 ## Usage instructions
@@ -51,9 +50,9 @@ Plain HTML/JS has the extension registered for you automatically, because no `re
 
 
 ## API
-
-TODO describe the API of the extension here.
-
+- `let api = cy.layvo('get')`: get the extension instance
+- `api.generalProperties()`: get general layout metrics
+- `api.differenceMetrics(cy, cy2)`: get synchronized layout similarity metrics
 
 ## Build targets
 
