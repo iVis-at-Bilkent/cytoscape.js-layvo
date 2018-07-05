@@ -26,7 +26,7 @@ let findNumberOfCrosses = function(cy) {
 		} else {
 			lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
 			gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
-			return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
+			return (0.01 < lambda && lambda < 0.99) && (0.1 < gamma && gamma < 0.99);
 		}
 	};
 
@@ -34,9 +34,9 @@ let findNumberOfCrosses = function(cy) {
 	let edgeArray = cy.edges().toArray();
 
 	for (let i = 0; i < edgeArray.length; i++) {
-		let p = edgeArray[i].sourceEndpoint(), q = edgeArray[i].targetEndpoint();
-		for (let j = i + 1; j < edgeArray.length; j++) {
-			let r = edgeArray[j].sourceEndpoint(), s = edgeArray[j].targetEndpoint();
+		var p = edgeArray[i].sourceEndpoint(), q = edgeArray[i].targetEndpoint();
+		for (var j = i + 1; j < edgeArray.length; j++) {
+			var r = edgeArray[j].sourceEndpoint(), s = edgeArray[j].targetEndpoint();
 			if (doesIntersect(p.x, p.y, q.x, q.y, r.x, r.y, s.x, s.y)) {
 				crosses++;
 			}

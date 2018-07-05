@@ -54,8 +54,5 @@
   },
   "peerDependencies": {
     "cytoscape": "^3.2.0"
-  },
-  "dependencies": {
-    "sweepline": "0.1.0"
   }
 }
