@@ -47,7 +47,7 @@ let findNumberOfCrosses = function(cy) {
 
 let findNumberOfOverlappingNodes = function(cy) {
 	let doesOverlap = function(node, otherNode) {
-		let bb = node.boundingBox(), bbOther = otherNode.boundingBox();
+		let bb = node.boundingBox({includeLabels: false, includeOverlays: false}), bbOther = otherNode.boundingBox({includeLabels: false, includeOverlays: false});
 		return !(bbOther.x1 > bb.x2 || bbOther.x2 < bb.x1 || bbOther.y1 > bb.y2 || bbOther.y2 < bb.y1);
 	};
 
@@ -58,7 +58,7 @@ let findNumberOfOverlappingNodes = function(cy) {
 		let node = nodeArray[i];
 		for (let j = i + 1; j < nodeArray.length; j++) {
 			let otherNode = nodeArray[j];
-			if (doesOverlap(node, otherNode)) {
+			if (!node.ancestors().union(node.descendants()).contains(otherNode) && doesOverlap(node, otherNode)) {
 				overlaps++;
 			}
 		}
