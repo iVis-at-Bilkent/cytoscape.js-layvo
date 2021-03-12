@@ -2,7 +2,9 @@ module.exports = function () {
   let cy = this;
   return {
     generalProperties: () => { return generalProperties(cy) },
-    differenceMetrics: differenceMetrics,
+    saveLayoutData: saveLayoutData,
+    getMeanSlopeDiff: getMeanSlopeDiff,
+    getMeanPositionDiff: getMeanPositionDiff
   };
 };
 
@@ -87,119 +89,91 @@ let getTotalEdgeLength = function (cy) {
   return totalLength;
 };
 
-let getAverageEdgeLength = function (cy) {
-  return getTotalEdgeLength(cy) / cy.edges().length;
+let layoutData1 = null;
+
+let getLayoutData = function (cy) {
+  const data = {};
+  setLayoutData4Nodes(cy.nodes(), data, 0);
+  return data;
 };
 
-let differenceMetrics = function (cy, otherCy) {
-  // align
-  cy.fit(50); otherCy.fit(50);
+let setLayoutData4Nodes = function (nodes, data, level) {
+  if (!nodes || nodes.length < 1) {
+    return;
+  }
+  data[level] = {};
+  // set positions of the nodes in the level
+  const nodesOnTheLevel = nodes.filter(x => x.isOrphan());
+  for (let i = 0; i < nodesOnTheLevel.length; i++) {
+    data[level][nodesOnTheLevel[i].id()] = nodesOnTheLevel[i].position();
+  }
+  // set positions of the nodes in deeper levels recursively
+  const parentNodes = nodes.filter(':parent');
+  for (let i = 0; i < parentNodes.length; i++) {
+    const children = parentNodes[i].children();
+    setLayoutData4Nodes(children, data, level++);
+  }
+};
 
-  if (cy.zoom() > otherCy.zoom()) {
-    cy.zoom(otherCy.zoom()); cy.pan(otherCy.pan());
-  } else {
-    otherCy.zoom(cy.zoom()); otherCy.pan(cy.pan());
+let saveLayoutData = function (cy) {
+  layoutData1 = getLayoutData(cy);
+};
+
+// returns an array of strings which is the intersection of keys of 2 objects 
+let setIntersection = (o1, o2) => {
+  let intersection = [];
+  for (let k in o2) {
+    if (o1[k]) {
+      intersection.push(k)
+    }
+  }
+  return intersection;
+};
+
+let getMeanPairwiseLevelOrderDistance = function (cy, distFn) {
+  if (!layoutData1) {
+    throw 'first you should call "saveLayoutData" to save the layout data!';
+  }
+  let totalDiff = 0;
+  let cntDiff = 0;
+  const layoutData2 = getLayoutData(cy);
+  const levelCount1 = Object.keys(layoutData1).length;
+  const levelCount2 = Object.keys(layoutData2).length;
+  const commonLevels = Math.min(levelCount1, levelCount2);
+  for (let i = 0; i < commonLevels; i++) {
+    const commons = setIntersection(layoutData1[i], layoutData2[i]);
+    for (let j = 0; j < commons.length; j++) {
+      for (let k = j + 1; k < commons.length; k++) {
+        const metric1 = distFn(layoutData1[i][commons[j]], layoutData1[i][commons[k]]);
+        const metric2 = distFn(layoutData2[i][commons[j]], layoutData2[i][commons[k]]);
+        totalDiff += Math.abs(metric1 - metric2);
+        cntDiff += 1;
+      }
+    }
   }
 
-  return {
-    averageDistanceBetweenGraphs: getAverageDistanceBetweenGraphs(cy, otherCy),
-    orthogonalOrdering: orthogonalOrdering(cy, otherCy),
-  };
+  return totalDiff / cntDiff;
+}
+
+// calculates the average change of slope between each pair of the nodes
+let getMeanSlopeDiff = function (cy) {
+  return getMeanPairwiseLevelOrderDistance(cy, getAngle);
 };
 
-let getAverageDistanceBetweenGraphs = function (cy, otherCy) {
-  let getDistance = function (p, q) {
-    let dx = q.x - p.x, dy = q.y - p.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
-
-  let totalDistance = 0, numberOfNodes = 0;
-
-  cy.nodes().forEach(function (ele) {
-    let otherEle = otherCy.getElementById(ele.id());
-    if (otherEle.length) {
-      numberOfNodes++;
-      totalDistance += getDistance(ele.renderedPosition(), otherEle.renderedPosition());
-    }
-  });
-  return numberOfNodes ? totalDistance / numberOfNodes : 0;
+// calculates the average change of positions between each pair of the nodes using L2 distance metric
+let getMeanPositionDiff = function (cy) {
+  return getMeanPairwiseLevelOrderDistance(cy, getL2Distance);
 };
 
-let orthogonalOrdering = function (cy, otherCy) {
-  let calcEdgeAngle = function (edge) {
-    let dx = edge.targetEndpoint().x - edge.sourceEndpoint().x;
-    let dy = edge.targetEndpoint().y - edge.sourceEndpoint().y;
-    let angle = Math.atan2(dx, dy);
-    return angle < 0 ? angle + 2 * Math.PI : angle;
-  };
+let getAngle = function (p1, p2) {
+  const deltaY = p1.y - p2.y;
+  const deltaX = p1.x - p2.x;
+  return Math.atan2(deltaY, deltaX) * 180 / Math.PI
+};
 
-  let getWeight = function (theta, lowerBound, upperBound) {
-    if ((theta % Math.PI) > Math.PI / 4) {
-      let slope = -4 / Math.PI, height = 2, width = Math.PI / 2;
-      let x = Math.floor(upperBound / width) - Math.floor(lowerBound / width);
-      let area = 0;
-      let lowerBoundY = 2 + (lowerBound % width) * slope, upperBoundY = 2 + (upperBound % width) * slope;
-
-      if (x > 0) {
-        area = width * (x - 1);
-        area += (width - (lowerBound % width)) * lowerBoundY / 2;
-        area += (height + upperBoundY) / 2 * (upperBound % width);
-      } else {
-        area += (lowerBoundY + upperBoundY) / 2 * ((upperBound - lowerBound) % width);
-      }
-      return area;
-    } else {
-      let slope = 4 / Math.PI, height = 2, width = Math.PI / 2;
-      let x = Math.floor(upperBound / width) - Math.floor(lowerBound / width);
-      let area = width * Math.floor((upperBound - lowerBound) / width);
-      let lowerBoundY = (lowerBound % width) * slope, upperBoundY = (upperBound % width) * slope;
-
-      if (x > 0) {
-        area = width * (x - 1);
-        area += (width - (lowerBound % width)) * (height + lowerBoundY) / 2;
-        area += upperBoundY * (upperBound % width) / 2;
-      } else {
-        area += (lowerBoundY + upperBoundY) / 2 * ((upperBound - lowerBound) % width);
-      }
-      return area;
-    }
-  };
-
-  let getOrder = function (edge, otherEdge) {
-    let totalWeight = 0, angle = calcEdgeAngle(edge), otherAngle = calcEdgeAngle(otherEdge);
-
-    if (angle > otherAngle) {
-      [angle, otherAngle] = [otherAngle, angle];
-    }
-    let upperBound = 0;
-    while (upperBound != otherAngle) {
-      upperBound = Math.PI / 4 * (Math.floor(angle / (Math.PI / 4)) + 1);
-
-      if (upperBound > otherAngle) {
-        upperBound = otherAngle;
-      }
-
-      if (angle % Math.PI / 2 > Math.PI / 4) {
-        totalWeight += getWeight(5, angle, upperBound);
-      } else {
-        totalWeight += getWeight(0, angle, upperBound);
-      }
-
-      angle = upperBound;
-
-    }
-    return totalWeight;
-  };
-
-  let totalAngle = 0, numberOfEdges = 0;
-
-  cy.edges().forEach(function (ele) {
-    let otherEle = otherCy.getElementById(ele.id());
-    if (otherEle.length) {
-      numberOfEdges++;
-      totalAngle += Math.min(getOrder(ele, otherEle), getOrder(otherEle, ele));
-    }
-  });
-  console.log(totalAngle);
-  return numberOfEdges ? totalAngle / numberOfEdges : 0;
+// L2 norm 
+let getL2Distance = function (p1, p2) {
+  const deltaY = p1.y - p2.y;
+  const deltaX = p1.x - p2.x;
+  return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 };

@@ -1,0 +1,40 @@
+<!DOCTYPE>
+<html>
+
+<head>
+  <title>cytoscape.js-layvo demo</title>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+  <link rel="stylesheet" href="style2.css">
+
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <!-- for testing with local version of cytoscape.js -->
+  <!--<script src="../cytoscape.js/build/cytoscape.js"></script>-->
+  <script src="https://unpkg.com/layout-base/layout-base.js"></script>
+  <script src="https://unpkg.com/cose-base/cose-base.js"></script>
+  <script src="https://unpkg.com/cytoscape-cose-bilkent/cytoscape-cose-bilkent.js"></script>
+  <script src="../cytoscape-layvo.js"></script>
+  <script src="main.js"></script>
+</head>
+
+<body>
+  <h1>cytoscape-expand-collapse demo</h1>
+  <div class="fleft">
+    <div class="menu-container">
+      <button id="generalProps">General Properties</button>
+      <button id="saveLayoutData">Save Layout Data</button>
+      <button id="meanSlopeDiff">Mean Slope Difference</button>
+      <button id="meanPositionDiff">Mean Position Difference</button>
+    </div>
+    <div class="menu-container">
+      <pre id="results"></pre>
+
+    </div>
+  </div>
+
+  <div class="fright" id="cy"></div>
+
+</body>
+
+</html>
