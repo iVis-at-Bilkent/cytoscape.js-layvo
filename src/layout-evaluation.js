@@ -2,9 +2,9 @@ module.exports = function () {
   let cy = this;
   return {
     generalProperties: () => { return generalProperties(cy) },
-    saveLayoutData: saveLayoutData,
-    getMeanAngleDiff: getMeanAngleDiff,
-    getMeanPositionDiff: getMeanPositionDiff
+    saveLayoutData: () => { return saveLayoutData(cy) },
+    getMeanAngleDiff: () => { return getMeanAngleDiff(cy) },
+    getMeanPositionDiff: () => { return getMeanPositionDiff(cy) }
   };
 };
 
@@ -93,35 +93,34 @@ let layoutData1 = null;
 
 let getLayoutData = function (cy) {
   const data = {};
-  setLayoutData4Nodes(cy.nodes(), data, 0);
+  setLayoutData4Nodes(cy.nodes(), data, '__root__');
   return data;
 };
 
 // set layout data for each compound node or graph
-let setLayoutData4Nodes = function (nodes, data, level) {
+let setLayoutData4Nodes = function (nodes, data, parentId) {
   if (!nodes || nodes.length < 1) {
     return;
   }
-  if (!data[level]) {
-    data[level] = {};
+  if (!data[parentId]) {
+    data[parentId] = {};
   }
 
   // set positions of the nodes in the level
   let nodesOnTheLevel = nodes;
-  if (level == 0) {
+  if (parentId === '__root__') { // check if this is the root cy graph
     nodesOnTheLevel = nodes.filter(x => x.isOrphan());
   }
 
   for (let i = 0; i < nodesOnTheLevel.length; i++) {
     const p = nodesOnTheLevel[i].position();
-    data[level][nodesOnTheLevel[i].id()] = { x: p.x, y: p.y };
+    data[parentId][nodesOnTheLevel[i].id()] = { x: p.x, y: p.y };
   }
   const parentNodes = nodesOnTheLevel.filter(':parent');
   for (let i = 0; i < parentNodes.length; i++) {
     // set positions of the nodes in deeper levels recursively
-    level += 1;
     const children = parentNodes[i].children();
-    setLayoutData4Nodes(children, data, level);
+    setLayoutData4Nodes(children, data, parentNodes[i].id());
   }
 };
 
@@ -147,15 +146,14 @@ let getMeanPairwiseLevelOrderDistance = function (cy, distFn) {
   let totalDiff = 0;
   let cntDiff = 0;
   const layoutData2 = getLayoutData(cy);
-  const levelCount1 = Object.keys(layoutData1).length;
-  const levelCount2 = Object.keys(layoutData2).length;
-  const commonLevels = Math.min(levelCount1, levelCount2);
-  for (let i = 0; i < commonLevels; i++) {
-    const commons = setIntersection(layoutData1[i], layoutData2[i]);
+  const commonLevels = setIntersection(layoutData1, layoutData2);
+  for (let i = 0; i < commonLevels.length; i++) {
+    const l = commonLevels[i];
+    const commons = setIntersection(layoutData1[l], layoutData2[l]);
     for (let j = 0; j < commons.length; j++) {
       for (let k = j + 1; k < commons.length; k++) {
-        const metric1 = distFn(layoutData1[i][commons[j]], layoutData1[i][commons[k]]);
-        const metric2 = distFn(layoutData2[i][commons[j]], layoutData2[i][commons[k]]);
+        const metric1 = distFn(layoutData1[l][commons[j]], layoutData1[l][commons[k]]);
+        const metric2 = distFn(layoutData2[l][commons[j]], layoutData2[l][commons[k]]);
         totalDiff += Math.abs(metric1 - metric2);
         cntDiff += 1;
       }

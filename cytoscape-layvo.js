@@ -89,9 +89,15 @@ module.exports = function () {
     generalProperties: function generalProperties() {
       return _generalProperties(cy);
     },
-    saveLayoutData: saveLayoutData,
-    getMeanAngleDiff: getMeanAngleDiff,
-    getMeanPositionDiff: getMeanPositionDiff
+    saveLayoutData: function saveLayoutData() {
+      return _saveLayoutData(cy);
+    },
+    getMeanAngleDiff: function getMeanAngleDiff() {
+      return _getMeanAngleDiff(cy);
+    },
+    getMeanPositionDiff: function getMeanPositionDiff() {
+      return _getMeanPositionDiff(cy);
+    }
   };
 };
 
@@ -207,22 +213,23 @@ var layoutData1 = null;
 
 var getLayoutData = function getLayoutData(cy) {
   var data = {};
-  setLayoutData4Nodes(cy.nodes(), data, 0);
+  setLayoutData4Nodes(cy.nodes(), data, '__root__');
   return data;
 };
 
 // set layout data for each compound node or graph
-var setLayoutData4Nodes = function setLayoutData4Nodes(nodes, data, level) {
+var setLayoutData4Nodes = function setLayoutData4Nodes(nodes, data, parentId) {
   if (!nodes || nodes.length < 1) {
     return;
   }
-  if (!data[level]) {
-    data[level] = {};
+  if (!data[parentId]) {
+    data[parentId] = {};
   }
 
   // set positions of the nodes in the level
   var nodesOnTheLevel = nodes;
-  if (level == 0) {
+  if (parentId === '__root__') {
+    // check if this is the root cy graph
     nodesOnTheLevel = nodes.filter(function (x) {
       return x.isOrphan();
     });
@@ -230,18 +237,17 @@ var setLayoutData4Nodes = function setLayoutData4Nodes(nodes, data, level) {
 
   for (var i = 0; i < nodesOnTheLevel.length; i++) {
     var p = nodesOnTheLevel[i].position();
-    data[level][nodesOnTheLevel[i].id()] = { x: p.x, y: p.y };
+    data[parentId][nodesOnTheLevel[i].id()] = { x: p.x, y: p.y };
   }
   var parentNodes = nodesOnTheLevel.filter(':parent');
   for (var _i = 0; _i < parentNodes.length; _i++) {
     // set positions of the nodes in deeper levels recursively
-    level += 1;
     var children = parentNodes[_i].children();
-    setLayoutData4Nodes(children, data, level);
+    setLayoutData4Nodes(children, data, parentNodes[_i].id());
   }
 };
 
-var saveLayoutData = function saveLayoutData(cy) {
+var _saveLayoutData = function _saveLayoutData(cy) {
   layoutData1 = getLayoutData(cy);
 };
 
@@ -263,15 +269,14 @@ var getMeanPairwiseLevelOrderDistance = function getMeanPairwiseLevelOrderDistan
   var totalDiff = 0;
   var cntDiff = 0;
   var layoutData2 = getLayoutData(cy);
-  var levelCount1 = Object.keys(layoutData1).length;
-  var levelCount2 = Object.keys(layoutData2).length;
-  var commonLevels = Math.min(levelCount1, levelCount2);
-  for (var i = 0; i < commonLevels; i++) {
-    var commons = setIntersection(layoutData1[i], layoutData2[i]);
+  var commonLevels = setIntersection(layoutData1, layoutData2);
+  for (var i = 0; i < commonLevels.length; i++) {
+    var l = commonLevels[i];
+    var commons = setIntersection(layoutData1[l], layoutData2[l]);
     for (var j = 0; j < commons.length; j++) {
       for (var k = j + 1; k < commons.length; k++) {
-        var metric1 = distFn(layoutData1[i][commons[j]], layoutData1[i][commons[k]]);
-        var metric2 = distFn(layoutData2[i][commons[j]], layoutData2[i][commons[k]]);
+        var metric1 = distFn(layoutData1[l][commons[j]], layoutData1[l][commons[k]]);
+        var metric2 = distFn(layoutData2[l][commons[j]], layoutData2[l][commons[k]]);
         totalDiff += Math.abs(metric1 - metric2);
         cntDiff += 1;
       }
@@ -282,12 +287,12 @@ var getMeanPairwiseLevelOrderDistance = function getMeanPairwiseLevelOrderDistan
 };
 
 // calculates the average change of angle (in degrees) between each pair of the nodes
-var getMeanAngleDiff = function getMeanAngleDiff(cy) {
+var _getMeanAngleDiff = function _getMeanAngleDiff(cy) {
   return getMeanPairwiseLevelOrderDistance(cy, getAngle);
 };
 
 // calculates the average change of positions between each pair of the nodes using L2 distance metric
-var getMeanPositionDiff = function getMeanPositionDiff(cy) {
+var _getMeanPositionDiff = function _getMeanPositionDiff(cy) {
   return getMeanPairwiseLevelOrderDistance(cy, getL2Distance);
 };
 
