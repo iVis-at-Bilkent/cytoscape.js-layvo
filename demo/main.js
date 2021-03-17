@@ -653,7 +653,10 @@ function main() {
       cy.layout({ name: 'grid' }).run();
       cy.fit();
     }
+  });
 
+  document.getElementById('randomize').addEventListener('click', function () {
+    cy.layout({ name: 'random' }).run();
   });
 }
 
