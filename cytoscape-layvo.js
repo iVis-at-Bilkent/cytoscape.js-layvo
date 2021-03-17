@@ -211,24 +211,33 @@ var getLayoutData = function getLayoutData(cy) {
   return data;
 };
 
+// set layout data for each compound node or graph
 var setLayoutData4Nodes = function setLayoutData4Nodes(nodes, data, level) {
   if (!nodes || nodes.length < 1) {
     return;
   }
-  data[level] = {};
+  if (!data[level]) {
+    data[level] = {};
+  }
+
   // set positions of the nodes in the level
-  var nodesOnTheLevel = nodes.filter(function (x) {
-    return x.isOrphan();
-  });
+  var nodesOnTheLevel = nodes;
+  if (level == 0) {
+    nodesOnTheLevel = nodes.filter(function (x) {
+      return x.isOrphan();
+    });
+  }
+
   for (var i = 0; i < nodesOnTheLevel.length; i++) {
     var p = nodesOnTheLevel[i].position();
     data[level][nodesOnTheLevel[i].id()] = { x: p.x, y: p.y };
   }
-  // set positions of the nodes in deeper levels recursively
-  var parentNodes = nodes.filter(':parent');
+  var parentNodes = nodesOnTheLevel.filter(':parent');
   for (var _i = 0; _i < parentNodes.length; _i++) {
+    // set positions of the nodes in deeper levels recursively
+    level += 1;
     var children = parentNodes[_i].children();
-    setLayoutData4Nodes(children, data, level++);
+    setLayoutData4Nodes(children, data, level);
   }
 };
 

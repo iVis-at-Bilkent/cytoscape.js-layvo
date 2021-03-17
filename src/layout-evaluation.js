@@ -97,22 +97,31 @@ let getLayoutData = function (cy) {
   return data;
 };
 
+// set layout data for each compound node or graph
 let setLayoutData4Nodes = function (nodes, data, level) {
   if (!nodes || nodes.length < 1) {
     return;
   }
-  data[level] = {};
+  if (!data[level]) {
+    data[level] = {};
+  }
+
   // set positions of the nodes in the level
-  const nodesOnTheLevel = nodes.filter(x => x.isOrphan());
+  let nodesOnTheLevel = nodes;
+  if (level == 0) {
+    nodesOnTheLevel = nodes.filter(x => x.isOrphan());
+  }
+
   for (let i = 0; i < nodesOnTheLevel.length; i++) {
     const p = nodesOnTheLevel[i].position();
     data[level][nodesOnTheLevel[i].id()] = { x: p.x, y: p.y };
   }
-  // set positions of the nodes in deeper levels recursively
-  const parentNodes = nodes.filter(':parent');
+  const parentNodes = nodesOnTheLevel.filter(':parent');
   for (let i = 0; i < parentNodes.length; i++) {
+    // set positions of the nodes in deeper levels recursively
+    level += 1;
     const children = parentNodes[i].children();
-    setLayoutData4Nodes(children, data, level++);
+    setLayoutData4Nodes(children, data, level);
   }
 };
 
