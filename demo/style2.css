@@ -67,7 +67,8 @@ button {
   transition: all .15s ease-in;
 }
 
-button:hover, button:focus {
+button:hover,
+button:focus {
   box-shadow: 0 4px 2px 0 rgba(0, 0, 0, 0.14), 0 6px 1px -2px rgba(0, 0, 0, 0.2), 0 6px 5px 0 rgba(0, 0, 0, 0.12);
 }
 
@@ -97,6 +98,23 @@ button:active:before {
   visibility: visible;
 }
 
+.w3-animate-top {
+  position: relative;
+  animation: animatetop 0.4s;
+}
+
+@keyframes animatetop {
+  from {
+    top: -300px;
+    opacity: 0
+  }
+
+  to {
+    top: 0;
+    opacity: 1
+  }
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: .7;
@@ -117,6 +135,7 @@ input[type='checkbox'] {
     height: 0;
     opacity: .5;
   }
+
   100% {
     width: 150px;
     height: 150px;
@@ -130,6 +149,7 @@ input[type='checkbox'] {
     height: 0;
     opacity: .5;
   }
+
   100% {
     width: 150px;
     height: 150px;
@@ -150,7 +170,8 @@ input[type='checkbox'] {
   padding: 4px;
 }
 
-.active, .accordion:hover {
+.active,
+.accordion:hover {
   background-color: #ccc;
 }
 

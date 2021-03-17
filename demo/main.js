@@ -1,19 +1,19 @@
 const graphElems = {
   nodes: [
-    { data: { id: 'a', foo: 3, bar: 5, baz: 7 } },
-    { data: { id: 'b', foo: 7, bar: 1, baz: 3 } },
-    { data: { id: 'c', foo: 2, bar: 7, baz: 6 } },
-    { data: { id: 'd', foo: 9, bar: 5, baz: 2 } },
-    { data: { id: 'e', foo: 2, bar: 4, baz: 5 } }
+    { data: { id: 'A', foo: 3, bar: 5, baz: 7 } },
+    { data: { id: 'B', foo: 7, bar: 1, baz: 3 } },
+    { data: { id: 'C', foo: 2, bar: 7, baz: 6 } },
+    { data: { id: 'D', foo: 9, bar: 5, baz: 2 } },
+    { data: { id: 'E', foo: 2, bar: 4, baz: 5 } }
   ],
   edges: [
-    { data: { id: 'ae', weight: 1, source: 'a', target: 'e' } },
-    { data: { id: 'ab', weight: 3, source: 'a', target: 'b' } },
-    { data: { id: 'be', weight: 4, source: 'b', target: 'e' } },
-    { data: { id: 'bc', weight: 5, source: 'b', target: 'c' } },
-    { data: { id: 'ce', weight: 6, source: 'c', target: 'e' } },
-    { data: { id: 'cd', weight: 2, source: 'c', target: 'd' } },
-    { data: { id: 'de', weight: 7, source: 'd', target: 'e' } }
+    { data: { id: 'AE', weight: 1, source: 'A', target: 'E' } },
+    { data: { id: 'AB', weight: 3, source: 'A', target: 'B' } },
+    { data: { id: 'BE', weight: 4, source: 'B', target: 'E' } },
+    { data: { id: 'BC', weight: 5, source: 'B', target: 'C' } },
+    { data: { id: 'CE', weight: 6, source: 'C', target: 'E' } },
+    { data: { id: 'CD', weight: 2, source: 'C', target: 'D' } },
+    { data: { id: 'DE', weight: 7, source: 'D', target: 'E' } }
   ]
 };
 
@@ -67,7 +67,7 @@ function main() {
   const apiFns = [
     { btnId: 'generalProps', fnName: 'generalProperties' },
     { btnId: 'saveLayoutData', fnName: 'saveLayoutData' },
-    { btnId: 'meanSlopeDiff', fnName: 'getMeanSlopeDiff' },
+    { btnId: 'meanAngleDiff', fnName: 'getMeanAngleDiff' },
     { btnId: 'meanPositionDiff', fnName: 'getMeanPositionDiff' }
   ];
 
@@ -75,7 +75,12 @@ function main() {
     document.getElementById(apiFns[i].btnId).addEventListener('click', function () {
       const r = api[apiFns[i].fnName](cy);
       const r2 = JSON.stringify(r, null, 4);
-      document.getElementById('results').textContent = r2;
+      const el = document.getElementById('results');
+      el.textContent = r2;
+      el.parentElement.className = 'w3-animate-top';
+      setTimeout(() => {
+        el.parentElement.className = '';
+      }, 500);
     });
   }
 }

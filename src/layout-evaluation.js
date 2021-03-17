@@ -3,7 +3,7 @@ module.exports = function () {
   return {
     generalProperties: () => { return generalProperties(cy) },
     saveLayoutData: saveLayoutData,
-    getMeanSlopeDiff: getMeanSlopeDiff,
+    getMeanAngleDiff: getMeanAngleDiff,
     getMeanPositionDiff: getMeanPositionDiff
   };
 };
@@ -105,7 +105,8 @@ let setLayoutData4Nodes = function (nodes, data, level) {
   // set positions of the nodes in the level
   const nodesOnTheLevel = nodes.filter(x => x.isOrphan());
   for (let i = 0; i < nodesOnTheLevel.length; i++) {
-    data[level][nodesOnTheLevel[i].id()] = nodesOnTheLevel[i].position();
+    const p = nodesOnTheLevel[i].position();
+    data[level][nodesOnTheLevel[i].id()] = { x: p.x, y: p.y };
   }
   // set positions of the nodes in deeper levels recursively
   const parentNodes = nodes.filter(':parent');
@@ -155,8 +156,8 @@ let getMeanPairwiseLevelOrderDistance = function (cy, distFn) {
   return totalDiff / cntDiff;
 }
 
-// calculates the average change of slope between each pair of the nodes
-let getMeanSlopeDiff = function (cy) {
+// calculates the average change of angle (in degrees) between each pair of the nodes
+let getMeanAngleDiff = function (cy) {
   return getMeanPairwiseLevelOrderDistance(cy, getAngle);
 };
 

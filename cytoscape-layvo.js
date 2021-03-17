@@ -90,7 +90,7 @@ module.exports = function () {
       return _generalProperties(cy);
     },
     saveLayoutData: saveLayoutData,
-    getMeanSlopeDiff: getMeanSlopeDiff,
+    getMeanAngleDiff: getMeanAngleDiff,
     getMeanPositionDiff: getMeanPositionDiff
   };
 };
@@ -221,7 +221,8 @@ var setLayoutData4Nodes = function setLayoutData4Nodes(nodes, data, level) {
     return x.isOrphan();
   });
   for (var i = 0; i < nodesOnTheLevel.length; i++) {
-    data[level][nodesOnTheLevel[i].id()] = nodesOnTheLevel[i].position();
+    var p = nodesOnTheLevel[i].position();
+    data[level][nodesOnTheLevel[i].id()] = { x: p.x, y: p.y };
   }
   // set positions of the nodes in deeper levels recursively
   var parentNodes = nodes.filter(':parent');
@@ -271,8 +272,8 @@ var getMeanPairwiseLevelOrderDistance = function getMeanPairwiseLevelOrderDistan
   return totalDiff / cntDiff;
 };
 
-// calculates the average change of slope between each pair of the nodes
-var getMeanSlopeDiff = function getMeanSlopeDiff(cy) {
+// calculates the average change of angle (in degrees) between each pair of the nodes
+var getMeanAngleDiff = function getMeanAngleDiff(cy) {
   return getMeanPairwiseLevelOrderDistance(cy, getAngle);
 };
 
