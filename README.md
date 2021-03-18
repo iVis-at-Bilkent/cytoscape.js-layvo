@@ -3,7 +3,7 @@ cytoscape-layvo
 
 ## Description
 
-Layout quality evaluation tool ([demo](https://ghcdn.rawgit.org/iVis-at-Bilkent/cytoscape.js-layvo/unstable/demo/demo2.html))
+Layout quality evaluation tool ([demo](https://combinatronics.com/iVis-at-Bilkent/cytoscape.js-layvo/unstable/demo/demo2.html))
 
 ## Dependencies
 
