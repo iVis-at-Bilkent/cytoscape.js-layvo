@@ -118,6 +118,48 @@ const nestedGraphElems =
         "x": 0,
         "y": 0
       },
+    },
+    {
+      "data": {
+        "id": "e1",
+        "source": "n3",
+        "target": "n6"
+      }
+    },
+    {
+      "data": {
+        "id": "e3",
+        "source": "n3",
+        "target": "n6"
+      }
+    },
+    {
+      "data": {
+        "id": "e4",
+        "source": "n0",
+        "target": "n2"
+      }
+    },
+    {
+      "data": {
+        "id": "e5",
+        "source": "n13",
+        "target": "n4"
+      }
+    },
+    {
+      "data": {
+        "id": "e6",
+        "source": "n7",
+        "target": "n13"
+      }
+    },
+    {
+      "data": {
+        "id": "e7",
+        "source": "n7",
+        "target": "n4"
+      }
     }
   ],
   "nodes": [
@@ -330,6 +372,19 @@ const nestedGraphElems =
   ]
 };
 
+function outputResults(result, isOutputRaw = false) {
+  let r = result;
+  if (!isOutputRaw) {
+    r = JSON.stringify(result, null, 4);
+  }
+  const el = document.getElementById('results');
+  el.textContent = r;
+  el.parentElement.className = 'w3-animate-top';
+  setTimeout(() => {
+    el.parentElement.className = '';
+  }, 500);
+}
+
 function main() {
   var cy = window.cy = cytoscape({
     container: document.getElementById('cy'),
@@ -378,32 +433,37 @@ function main() {
 
   const api = cy.layvo('get');
 
-  const apiFns = [
-    { btnId: 'generalProps', fnName: 'generalProperties' },
-    { btnId: 'saveLayoutData', fnName: 'saveLayoutData' },
-    { btnId: 'meanAngleDiff', fnName: 'getMeanAngleDiff' },
-    { btnId: 'meanPositionDiff', fnName: 'getMeanPositionDiff' }
-  ];
-
-  for (let i = 0; i < apiFns.length; i++) {
-    document.getElementById(apiFns[i].btnId).addEventListener('click', function () {
-      try {
-        const r = api[apiFns[i].fnName](cy);
-        const r2 = JSON.stringify(r, null, 4);
-        const el = document.getElementById('results');
-        el.textContent = r2;
-        // just for animation        
-        el.parentElement.className = 'w3-animate-top';
-        setTimeout(() => {
-          el.parentElement.className = '';
-        }, 500);
-      } catch (e) {
-        window.alert('Error: ' + e);
+  document.getElementById('meanPositionDiff').addEventListener('click', function () {
+    try {
+      let r = api.getMeanPositionDiff();
+      if (r.toFixed) {
+        r = r.toFixed(2) + ' pixels';
       }
-    });
-  }
+      outputResults(r, true);
+    } catch (e) {
+      window.alert('Error: ' + e);
+    }
+  });
+
+  document.getElementById('meanAngleDiff').addEventListener('click', function () {
+    try {
+      let r = api.getMeanAngleDiff();
+      if (r.toFixed) {
+        r = r.toFixed(2) + ' degrees';
+      }
+      outputResults(r, true);
+    } catch (e) {
+      window.alert('Error: ' + e);
+    }
+  });
+
+  document.getElementById('saveLayoutData').addEventListener('click', function () {
+    api.saveLayoutData();
+    outputResults();
+  });
 
   document.getElementById('isShowBigGraph').addEventListener('change', function () {
+    cy.$().remove();
     if (this.checked) {
       cy.json({ elements: nestedGraphElems });
       cy.fit();
@@ -416,6 +476,19 @@ function main() {
 
   document.getElementById('randomize').addEventListener('click', function () {
     cy.layout({ name: 'random' }).run();
+  });
+
+  document.getElementById('generalProps').addEventListener('click', function () {
+    const r = api.generalProperties();
+    for (const k in r) {
+      if (r[k].toFixed) {
+        r[k] = Number(r[k].toFixed(2));
+      }
+    }
+    const r2 = JSON.stringify(r, null, 4);
+    const el = document.getElementById('results');
+    el.textContent = r2;
+    outputResults(r);
   });
 }
 
