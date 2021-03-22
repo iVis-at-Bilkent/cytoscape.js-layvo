@@ -19,27 +19,97 @@ let generalProperties = function (cy) {
   };
 };
 
-let findNumberOfCrosses = function (cy) {
-  let doesIntersect = function (a, b, c, d, p, q, r, s) {
-    var det, gamma, lambda;
-    det = (c - a) * (s - q) - (r - p) * (d - b);
-    if (det === 0) {
-      return false;
-    } else {
-      lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
-      gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
-      return (0.01 < lambda && lambda < 0.99) && (0.1 < gamma && gamma < 0.99);
+let doIntersect = function (e1, e2) {
+  const s1 = e1.source();
+  const t1 = e1.target();
+  const s2 = e2.source();
+  const t2 = e2.target();
+  const srcTgtIds = {};
+  srcTgtIds[s1.id()] = true;
+  srcTgtIds[s2.id()] = true;
+  srcTgtIds[t1.id()] = true;
+  srcTgtIds[t2.id()] = true;
+  // check if the edges have different source and target nodes
+  if (Object.keys(srcTgtIds).length < 4) {
+    return false;
+  }
+  const s1p = s1.position();
+  const t1p = t1.position();
+  const s2p = s2.position();
+  const t2p = t2.position();
+  let l1 = findLineEquationFrom2Points(s1p, t1p);
+  let l2 = findLineEquationFrom2Points(s2p, t2p);
+  const intersectionPoint = findIntersectionPointsOf2Lines(l1, l2);
+  if (!intersectionPoint) {
+    return false;
+  }
+  const xRange1 = [Math.min(s1p.x, t1p.x), Math.max(s1p.x, t1p.x)];
+  const xRange2 = [Math.min(s2p.x, t2p.x), Math.max(s2p.x, t2p.x)];
+  const yRange1 = [Math.min(s1p.y, t1p.y), Math.max(s1p.y, t1p.y)];
+  const yRange2 = [Math.min(s2p.y, t2p.y), Math.max(s2p.y, t2p.y)];
+  const { x, y } = intersectionPoint;
+
+  return x >= xRange1[0] && x >= xRange2[0] && x <= xRange1[1] && x <= xRange2[1]
+    && y >= yRange1[0] && y >= yRange2[0] && y <= yRange1[1] && y <= yRange2[1];
+};
+
+/** If line equation is like "y = mx + n", returns an object with type {m: number, n: number}
+ * on the other hand line equation can be like x=3. In those cases returns an object like {x: number} 
+ * @param  {} p1 {x: number, y: number}
+ * @param  {} p2 {x: number, y: number}
+ */
+let findLineEquationFrom2Points = function (p1, p2) {
+  const deltaX = p2.x - p1.x;
+  const deltaY = p2.y - p1.y;
+  if (deltaY == 0 && deltaX == 0) {
+    return null;
+  }
+  if (deltaX == 0) {
+    return { x: p1.x };
+  }
+  if (deltaY == 0) {
+    return { m: 0, n: p1.y };
+  }
+  const m = deltaY / deltaX;
+  const n = (p1.y * p2.x - p1.x * p2.y) / deltaX;
+  return { m: m, n: n };
+}
+
+/** "y = mx + n" or "x=3" are a line equaltions. Returns xy coordinates of point type {x: number, y: number}
+ * @param  {} l1 {m: number, n: number}
+ * @param  {} l2 {m: number, n: number}
+ */
+let findIntersectionPointsOf2Lines = function (l1, l2) {
+  // if both a like lines like x=3 
+  if (l1.x && l2.x) {
+    if (l1.x == l2.x) {
+      return { x: l1.x, y: 0 };
     }
-  };
+    return null;
+  }
+  if (l1.x) {
+    return { x: l1.x, y: l2.m * l1.x + l2.n };
+  }
+  if (l2.x) {
+    return { x: l2.x, y: l1.m * l2.x + l1.n };
+  }
+  const deltaM = l2.m - l1.m;
+  // there is no intersection between 2 lines, they are parallel
+  if (deltaM == 0) {
+    return null;
+  }
+  let x = (l1.n - l2.n) / deltaM;
+  let y = (l1.n * l2.m - l1.m * l2.n) / deltaM;
+  return { x: x, y: y };
+}
 
+let findNumberOfCrosses = function (cy) {
   let crosses = 0;
-  let edgeArray = cy.edges().toArray();
+  const edges = cy.edges();
 
-  for (let i = 0; i < edgeArray.length; i++) {
-    var p = edgeArray[i].sourceEndpoint(), q = edgeArray[i].targetEndpoint();
-    for (var j = i + 1; j < edgeArray.length; j++) {
-      var r = edgeArray[j].sourceEndpoint(), s = edgeArray[j].targetEndpoint();
-      if (doesIntersect(p.x, p.y, q.x, q.y, r.x, r.y, s.x, s.y)) {
+  for (let i = 0; i < edges.length; i++) {
+    for (var j = i + 1; j < edges.length; j++) {
+      if (doIntersect(edges[i], edges[j])) {
         crosses++;
       }
     }

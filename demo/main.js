@@ -428,7 +428,8 @@ function main() {
         }
       }
     ],
-    elements: graphElems
+    elements: graphElems,
+    wheelSensitivity: 0.1,
   });
 
   const api = cy.layvo('get');
