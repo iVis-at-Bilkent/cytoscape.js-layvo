@@ -136,7 +136,7 @@ const nestedGraphElems =
     {
       "data": {
         "id": "e4",
-        "source": "n0",
+        "source": "c0",
         "target": "n2"
       }
     },
@@ -157,7 +157,7 @@ const nestedGraphElems =
     {
       "data": {
         "id": "e7",
-        "source": "n7",
+        "source": "c2",
         "target": "n4"
       }
     }
