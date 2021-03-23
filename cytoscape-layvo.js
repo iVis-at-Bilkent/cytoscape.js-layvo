@@ -112,34 +112,21 @@ var _generalProperties = function _generalProperties(cy) {
   };
 };
 
+/** e1 and e2 are array of objects
+ * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number}, srcId: string, tgtId: string }[] } e1 
+ * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number}, srcId: string, tgtId: string }[] } e2 
+ */
 var doIntersect = function doIntersect(e1, e2) {
-  var s1 = e1.source();
-  var t1 = e1.target();
-  var s2 = e2.source();
-  var t2 = e2.target();
-  var srcTgtIds = {};
-  srcTgtIds[s1.id()] = true;
-  srcTgtIds[s2.id()] = true;
-  srcTgtIds[t1.id()] = true;
-  srcTgtIds[t2.id()] = true;
-  // check if the edges have different source and target nodes
-  if (Object.keys(srcTgtIds).length < 4) {
-    return false;
-  }
-  var s1p = s1.position();
-  var t1p = t1.position();
-  var s2p = s2.position();
-  var t2p = t2.position();
-  var l1 = findLineEquationFrom2Points(s1p, t1p);
-  var l2 = findLineEquationFrom2Points(s2p, t2p);
+  var l1 = findLineEquationFrom2Points(e1.srcEndpoint, e1.tgtEndpoint);
+  var l2 = findLineEquationFrom2Points(e2.srcEndpoint, e2.tgtEndpoint);
   var intersectionPoint = findIntersectionPointsOf2Lines(l1, l2);
   if (!intersectionPoint) {
     return false;
   }
-  var xRange1 = [Math.min(s1p.x, t1p.x), Math.max(s1p.x, t1p.x)];
-  var xRange2 = [Math.min(s2p.x, t2p.x), Math.max(s2p.x, t2p.x)];
-  var yRange1 = [Math.min(s1p.y, t1p.y), Math.max(s1p.y, t1p.y)];
-  var yRange2 = [Math.min(s2p.y, t2p.y), Math.max(s2p.y, t2p.y)];
+  var xRange1 = [Math.min(e1.srcEndpoint.x, e1.tgtEndpoint.x), Math.max(e1.srcEndpoint.x, e1.tgtEndpoint.x)];
+  var xRange2 = [Math.min(e2.srcEndpoint.x, e2.tgtEndpoint.x), Math.max(e2.srcEndpoint.x, e2.tgtEndpoint.x)];
+  var yRange1 = [Math.min(e1.srcEndpoint.y, e1.tgtEndpoint.y), Math.max(e1.srcEndpoint.y, e1.tgtEndpoint.y)];
+  var yRange2 = [Math.min(e2.srcEndpoint.y, e2.tgtEndpoint.y), Math.max(e2.srcEndpoint.y, e2.tgtEndpoint.y)];
   var x = intersectionPoint.x,
       y = intersectionPoint.y;
 
@@ -199,7 +186,9 @@ var findIntersectionPointsOf2Lines = function findIntersectionPointsOf2Lines(l1,
 
 var findNumberOfCrosses = function findNumberOfCrosses(cy) {
   var crosses = 0;
-  var edges = cy.edges();
+  var edges = cy.edges().map(function (x) {
+    return { srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() };
+  });
 
   for (var i = 0; i < edges.length; i++) {
     for (var j = i + 1; j < edges.length; j++) {

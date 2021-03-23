@@ -19,34 +19,21 @@ let generalProperties = function (cy) {
   };
 };
 
+/** e1 and e2 are array of objects
+ * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number} }[] } e1 
+ * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number} }[] } e2 
+ */
 let doIntersect = function (e1, e2) {
-  const s1 = e1.source();
-  const t1 = e1.target();
-  const s2 = e2.source();
-  const t2 = e2.target();
-  const srcTgtIds = {};
-  srcTgtIds[s1.id()] = true;
-  srcTgtIds[s2.id()] = true;
-  srcTgtIds[t1.id()] = true;
-  srcTgtIds[t2.id()] = true;
-  // check if the edges have different source and target nodes
-  if (Object.keys(srcTgtIds).length < 4) {
-    return false;
-  }
-  const s1p = s1.position();
-  const t1p = t1.position();
-  const s2p = s2.position();
-  const t2p = t2.position();
-  let l1 = findLineEquationFrom2Points(s1p, t1p);
-  let l2 = findLineEquationFrom2Points(s2p, t2p);
+  let l1 = findLineEquationFrom2Points(e1.srcEndpoint, e1.tgtEndpoint);
+  let l2 = findLineEquationFrom2Points(e2.srcEndpoint, e2.tgtEndpoint);
   const intersectionPoint = findIntersectionPointsOf2Lines(l1, l2);
   if (!intersectionPoint) {
     return false;
   }
-  const xRange1 = [Math.min(s1p.x, t1p.x), Math.max(s1p.x, t1p.x)];
-  const xRange2 = [Math.min(s2p.x, t2p.x), Math.max(s2p.x, t2p.x)];
-  const yRange1 = [Math.min(s1p.y, t1p.y), Math.max(s1p.y, t1p.y)];
-  const yRange2 = [Math.min(s2p.y, t2p.y), Math.max(s2p.y, t2p.y)];
+  const xRange1 = [Math.min(e1.srcEndpoint.x, e1.tgtEndpoint.x), Math.max(e1.srcEndpoint.x, e1.tgtEndpoint.x)];
+  const xRange2 = [Math.min(e2.srcEndpoint.x, e2.tgtEndpoint.x), Math.max(e2.srcEndpoint.x, e2.tgtEndpoint.x)];
+  const yRange1 = [Math.min(e1.srcEndpoint.y, e1.tgtEndpoint.y), Math.max(e1.srcEndpoint.y, e1.tgtEndpoint.y)];
+  const yRange2 = [Math.min(e2.srcEndpoint.y, e2.tgtEndpoint.y), Math.max(e2.srcEndpoint.y, e2.tgtEndpoint.y)];
   const { x, y } = intersectionPoint;
 
   return x >= xRange1[0] && x >= xRange2[0] && x <= xRange1[1] && x <= xRange2[1]
@@ -105,7 +92,7 @@ let findIntersectionPointsOf2Lines = function (l1, l2) {
 
 let findNumberOfCrosses = function (cy) {
   let crosses = 0;
-  const edges = cy.edges();
+  const edges = cy.edges().map(x => { return { srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() } })
 
   for (let i = 0; i < edges.length; i++) {
     for (var j = i + 1; j < edges.length; j++) {
