@@ -133,6 +133,9 @@ let getTotalArea = function (cy) {
 let getTotalEdgeLength = function (cy) {
   let getDistance = function (p, q) {
     let dx = q.x - p.x, dy = q.y - p.y;
+    if (isNaN(p.x) || isNaN(p.y) || isNaN(q.x) || isNaN(q.y)) {
+      return 0;
+    }
     return Math.sqrt(dx * dx + dy * dy);
   };
 

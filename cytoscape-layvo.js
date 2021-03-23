@@ -113,8 +113,8 @@ var _generalProperties = function _generalProperties(cy) {
 };
 
 /** e1 and e2 are array of objects
- * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number}, srcId: string, tgtId: string }[] } e1 
- * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number}, srcId: string, tgtId: string }[] } e2 
+ * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number} }[] } e1 
+ * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number} }[] } e2 
  */
 var doIntersect = function doIntersect(e1, e2) {
   var l1 = findLineEquationFrom2Points(e1.srcEndpoint, e1.tgtEndpoint);
@@ -231,6 +231,9 @@ var getTotalEdgeLength = function getTotalEdgeLength(cy) {
   var getDistance = function getDistance(p, q) {
     var dx = q.x - p.x,
         dy = q.y - p.y;
+    if (isNaN(p.x) || isNaN(p.y) || isNaN(q.x) || isNaN(q.y)) {
+      return 0;
+    }
     return Math.sqrt(dx * dx + dy * dy);
   };
 
