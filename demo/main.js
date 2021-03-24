@@ -394,7 +394,8 @@ function main() {
         style: {
           'background-color': '#c5e1a5',
           'label': 'data(id)',
-          'text-valign': 'center'
+          'text-valign': 'center',
+          'shape': 'rectangle'
         }
       },
       {
