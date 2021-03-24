@@ -200,13 +200,13 @@ var findNumberOfCrosses = function findNumberOfCrosses(cy) {
   return crosses;
 };
 
-var findNumberOfOverlappingNodes = function findNumberOfOverlappingNodes(cy) {
-  var doesOverlap = function doesOverlap(node, otherNode) {
-    var bb = node.boundingBox({ includeLabels: false, includeOverlays: false }),
-        bbOther = otherNode.boundingBox({ includeLabels: false, includeOverlays: false });
-    return !(bbOther.x1 > bb.x2 || bbOther.x2 < bb.x1 || bbOther.y1 > bb.y2 || bbOther.y2 < bb.y1);
-  };
+var doesOverlap = function doesOverlap(node, otherNode) {
+  var bb = node.boundingBox({ includeLabels: false, includeOverlays: false }),
+      bbOther = otherNode.boundingBox({ includeLabels: false, includeOverlays: false });
+  return !(bbOther.x1 > bb.x2 || bbOther.x2 < bb.x1 || bbOther.y1 > bb.y2 || bbOther.y2 < bb.y1);
+};
 
+var findNumberOfOverlappingNodes = function findNumberOfOverlappingNodes(cy) {
   var overlaps = 0;
   var nodeArray = cy.nodes().toArray();
 
@@ -248,8 +248,13 @@ var getTotalEdgeLength = function getTotalEdgeLength(cy) {
     for (var _iterator = edgeArray[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var edge = _step.value;
 
-      var p = edge.sourceEndpoint(),
-          q = edge.targetEndpoint();
+      var src = edge.source();
+      var tgt = edge.target();
+      if (doesOverlap(src, tgt)) {
+        continue;
+      }
+      var p = edge.sourceEndpoint();
+      var q = edge.targetEndpoint();
       totalLength += getDistance(p, q);
     }
   } catch (err) {

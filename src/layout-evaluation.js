@@ -104,12 +104,12 @@ let findNumberOfCrosses = function (cy) {
   return crosses;
 };
 
-let findNumberOfOverlappingNodes = function (cy) {
-  let doesOverlap = function (node, otherNode) {
-    let bb = node.boundingBox({ includeLabels: false, includeOverlays: false }), bbOther = otherNode.boundingBox({ includeLabels: false, includeOverlays: false });
-    return !(bbOther.x1 > bb.x2 || bbOther.x2 < bb.x1 || bbOther.y1 > bb.y2 || bbOther.y2 < bb.y1);
-  };
+let doesOverlap = function (node, otherNode) {
+  let bb = node.boundingBox({ includeLabels: false, includeOverlays: false }), bbOther = otherNode.boundingBox({ includeLabels: false, includeOverlays: false });
+  return !(bbOther.x1 > bb.x2 || bbOther.x2 < bb.x1 || bbOther.y1 > bb.y2 || bbOther.y2 < bb.y1);
+};
 
+let findNumberOfOverlappingNodes = function (cy) {
   let overlaps = 0;
   let nodeArray = cy.nodes().toArray();
 
@@ -143,7 +143,13 @@ let getTotalEdgeLength = function (cy) {
   let edgeArray = cy.edges().toArray();
 
   for (let edge of edgeArray) {
-    let p = edge.sourceEndpoint(), q = edge.targetEndpoint();
+    const src = edge.source();
+    const tgt = edge.target();
+    if (doesOverlap(src, tgt)) {
+      continue;
+    }
+    let p = edge.sourceEndpoint();
+    let q = edge.targetEndpoint();
     totalLength += getDistance(p, q);
   }
   return totalLength;
