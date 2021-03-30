@@ -106,6 +106,7 @@ var _generalProperties = function _generalProperties(cy) {
   return {
     numberOfEdgeCrosses: findNumberOfCrosses(cy),
     numberOfNodeOverlaps: findNumberOfOverlappingNodes(cy),
+    numberOfNodeEdgeOverlaps: findNumberOfOverlappingNodesAndEdges(cy),
     totalArea: getTotalArea(cy),
     totalEdgeLength: totalEdgeLength,
     averageEdgeLength: totalEdgeLength / cy.edges().length
@@ -216,6 +217,43 @@ var findNumberOfOverlappingNodes = function findNumberOfOverlappingNodes(cy) {
       var otherNode = nodeArray[j];
       if (!node.ancestors().union(node.descendants()).contains(otherNode) && doesOverlap(node, otherNode)) {
         overlaps++;
+      }
+    }
+  }
+  return overlaps;
+};
+
+var findNumberOfOverlappingNodesAndEdges = function findNumberOfOverlappingNodesAndEdges(cy) {
+  var overlaps = 0;
+  var nodeArray = cy.nodes().toArray();
+  var edgeArray = cy.edges().toArray();
+
+  var edges = cy.edges().map(function (x) {
+    return { srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() };
+  }); // array that keeps edges
+  var nodeSides = []; // array that keeps node sides, length = # of nodes * 4
+  nodeArray.forEach(function (node) {
+    var bb = node.boundingBox({ includeLabels: false, includeOverlays: false });
+    // the reason for +1 and -1s are because bounding box returns 1px more from each side
+    nodeSides.push({ srcEndpoint: { x: bb.x1 + 1, y: bb.y1 + 1 }, tgtEndpoint: { x: bb.x1 + bb.w - 1, y: bb.y1 + 1 } }); // top side
+    nodeSides.push({ srcEndpoint: { x: bb.x1 + bb.w - 1, y: bb.y1 + 1 }, tgtEndpoint: { x: bb.x2 - 1, y: bb.y2 - 1 } }); // right side
+    nodeSides.push({ srcEndpoint: { x: bb.x2 - 1, y: bb.y2 - 1 }, tgtEndpoint: { x: bb.x1 + 1, y: bb.y1 + bb.h - 1 } }); // bottom side
+    nodeSides.push({ srcEndpoint: { x: bb.x1 + 1, y: bb.y1 + bb.h - 1 }, tgtEndpoint: { x: bb.x1 + 1, y: bb.y1 + 1 } }); // left side
+  });
+
+  for (var i = 0; i < edgeArray.length; i++) {
+    var edgeSource = edgeArray[i].source();
+    var edgeTarget = edgeArray[i].target();
+    for (var j = 0; j < nodeArray.length; j++) {
+      var currentNode = nodeArray[j];
+      if (!edgeSource.same(currentNode) && !edgeTarget.same(currentNode) && edgeSource.ancestors().intersection(currentNode).length == 0 && edgeTarget.ancestors().intersection(currentNode).length == 0) {
+        var top = doIntersect(edges[i], nodeSides[j * 4]); // intersection btw edge and top side
+        var right = doIntersect(edges[i], nodeSides[j * 4 + 1]); // intersection btw edge and right side
+        var bottom = doIntersect(edges[i], nodeSides[j * 4 + 2]); // intersection btw edge and bottom side
+        var left = doIntersect(edges[i], nodeSides[j * 4 + 3]); // intersection btw edge and left side
+        if (top || right || bottom || left) {
+          overlaps++;
+        }
       }
     }
   }
