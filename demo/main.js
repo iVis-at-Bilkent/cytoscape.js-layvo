@@ -1,10 +1,10 @@
 const graphElems = {
   nodes: [
-    { data: { id: 'A', foo: 3, bar: 5, baz: 7 } },
-    { data: { id: 'B', foo: 7, bar: 1, baz: 3 } },
-    { data: { id: 'C', foo: 2, bar: 7, baz: 6 } },
-    { data: { id: 'D', foo: 9, bar: 5, baz: 2 } },
-    { data: { id: 'E', foo: 2, bar: 4, baz: 5 } }
+    { data: { id: 'A' } },
+    { data: { id: 'B' } },
+    { data: { id: 'C' } },
+    { data: { id: 'D' } },
+    { data: { id: 'E' } }
   ],
   edges: [
     { data: { id: 'AE', weight: 1, source: 'A', target: 'E' } },

@@ -124,6 +124,13 @@ var doIntersect = function doIntersect(e1, e2) {
   if (!intersectionPoint) {
     return false;
   }
+  if (intersectionPoint.isParallel) {
+    if (!intersectionPoint.canOverlap) {
+      return false;
+    } else {
+      return areLineSegmentsIntersect(e1, e2);
+    }
+  }
   var xRange1 = [Math.min(e1.srcEndpoint.x, e1.tgtEndpoint.x), Math.max(e1.srcEndpoint.x, e1.tgtEndpoint.x)];
   var xRange2 = [Math.min(e2.srcEndpoint.x, e2.tgtEndpoint.x), Math.max(e2.srcEndpoint.x, e2.tgtEndpoint.x)];
   var yRange1 = [Math.min(e1.srcEndpoint.y, e1.tgtEndpoint.y), Math.max(e1.srcEndpoint.y, e1.tgtEndpoint.y)];
@@ -133,6 +140,16 @@ var doIntersect = function doIntersect(e1, e2) {
 
 
   return x >= xRange1[0] && x >= xRange2[0] && x <= xRange1[1] && x <= xRange2[1] && y >= yRange1[0] && y >= yRange2[0] && y <= yRange1[1] && y <= yRange2[1];
+};
+
+// to check if to line segments that are from THE SAME equation (y = mx + n) intersects
+var areLineSegmentsIntersect = function areLineSegmentsIntersect(e1, e2) {
+  var x1min = Math.min(e1.srcEndpoint.x, e1.tgtEndpoint.x);
+  var x1max = Math.max(e1.srcEndpoint.x, e1.tgtEndpoint.x);
+  var x2min = Math.min(e2.srcEndpoint.x, e2.tgtEndpoint.x);
+  var x2max = Math.max(e2.srcEndpoint.x, e2.tgtEndpoint.x);
+
+  return x1max >= x2min && x2max >= x1min;
 };
 
 /** If line equation is like "y = mx + n", returns an object with type {m: number, n: number}
@@ -178,7 +195,7 @@ var findIntersectionPointsOf2Lines = function findIntersectionPointsOf2Lines(l1,
   var deltaM = l2.m - l1.m;
   // there is no intersection between 2 lines, they are parallel
   if (deltaM == 0) {
-    return null;
+    return { isParallel: true, canOverlap: l2.n == l1.n };
   }
   var x = (l1.n - l2.n) / deltaM;
   var y = (l1.n * l2.m - l1.m * l2.n) / deltaM;

@@ -27,9 +27,17 @@ let generalProperties = function (cy) {
 let doIntersect = function (e1, e2) {
   let l1 = findLineEquationFrom2Points(e1.srcEndpoint, e1.tgtEndpoint);
   let l2 = findLineEquationFrom2Points(e2.srcEndpoint, e2.tgtEndpoint);
-  const intersectionPoint = findIntersectionPointsOf2Lines(l1, l2);
+  let intersectionPoint = findIntersectionPointsOf2Lines(l1, l2);
   if (!intersectionPoint) {
     return false;
+  }
+  if (intersectionPoint.isParallel) {
+    if (!intersectionPoint.canOverlap) {
+      return false;
+    } else {
+      return areLineSegmentsIntersect(e1, e2);
+    }
+
   }
   const xRange1 = [Math.min(e1.srcEndpoint.x, e1.tgtEndpoint.x), Math.max(e1.srcEndpoint.x, e1.tgtEndpoint.x)];
   const xRange2 = [Math.min(e2.srcEndpoint.x, e2.tgtEndpoint.x), Math.max(e2.srcEndpoint.x, e2.tgtEndpoint.x)];
@@ -39,6 +47,16 @@ let doIntersect = function (e1, e2) {
 
   return x >= xRange1[0] && x >= xRange2[0] && x <= xRange1[1] && x <= xRange2[1]
     && y >= yRange1[0] && y >= yRange2[0] && y <= yRange1[1] && y <= yRange2[1];
+};
+
+// to check if to line segments that are from THE SAME equation (y = mx + n) intersects
+let areLineSegmentsIntersect = function (e1, e2) {
+  const x1min = Math.min(e1.srcEndpoint.x, e1.tgtEndpoint.x);
+  const x1max = Math.max(e1.srcEndpoint.x, e1.tgtEndpoint.x);
+  const x2min = Math.min(e2.srcEndpoint.x, e2.tgtEndpoint.x);
+  const x2max = Math.max(e2.srcEndpoint.x, e2.tgtEndpoint.x);
+
+  return x1max >= x2min && x2max >= x1min;
 };
 
 /** If line equation is like "y = mx + n", returns an object with type {m: number, n: number}
@@ -84,7 +102,7 @@ let findIntersectionPointsOf2Lines = function (l1, l2) {
   const deltaM = l2.m - l1.m;
   // there is no intersection between 2 lines, they are parallel
   if (deltaM == 0) {
-    return null;
+    return { isParallel: true, canOverlap: l2.n == l1.n };
   }
   let x = (l1.n - l2.n) / deltaM;
   let y = (l1.n * l2.m - l1.m * l2.n) / deltaM;
@@ -130,31 +148,31 @@ let findNumberOfOverlappingNodesAndEdges = function (cy) {
   let overlaps = 0;
   let nodeArray = cy.nodes().toArray();
   let edgeArray = cy.edges().toArray();
-  
+
   const edges = cy.edges().map(x => { return { srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() } }); // array that keeps edges
   const nodeSides = []; // array that keeps node sides, length = # of nodes * 4
-  nodeArray.forEach(function(node){
+  nodeArray.forEach(function (node) {
     let bb = node.boundingBox({ includeLabels: false, includeOverlays: false });
     // the reason for +1 and -1s are because bounding box returns 1px more from each side
-    nodeSides.push({ srcEndpoint: {x: bb.x1 + 1, y: bb.y1 + 1}, tgtEndpoint: {x: bb.x1 + bb.w - 1, y: bb.y1 + 1} }); // top side
-    nodeSides.push({ srcEndpoint: {x: bb.x1 + bb.w - 1, y: bb.y1 + 1}, tgtEndpoint: {x: bb.x2 - 1, y: bb.y2 - 1} }); // right side
-    nodeSides.push({ srcEndpoint: {x: bb.x2 - 1, y: bb.y2 - 1}, tgtEndpoint: {x: bb.x1 + 1, y: bb.y1 + bb.h - 1} }); // bottom side
-    nodeSides.push({ srcEndpoint: {x: bb.x1 + 1, y: bb.y1 + bb.h - 1}, tgtEndpoint: {x: bb.x1 + 1, y: bb.y1 + 1} }); // left side
+    nodeSides.push({ srcEndpoint: { x: bb.x1 + 1, y: bb.y1 + 1 }, tgtEndpoint: { x: bb.x1 + bb.w - 1, y: bb.y1 + 1 } }); // top side
+    nodeSides.push({ srcEndpoint: { x: bb.x1 + bb.w - 1, y: bb.y1 + 1 }, tgtEndpoint: { x: bb.x2 - 1, y: bb.y2 - 1 } }); // right side
+    nodeSides.push({ srcEndpoint: { x: bb.x2 - 1, y: bb.y2 - 1 }, tgtEndpoint: { x: bb.x1 + 1, y: bb.y1 + bb.h - 1 } }); // bottom side
+    nodeSides.push({ srcEndpoint: { x: bb.x1 + 1, y: bb.y1 + bb.h - 1 }, tgtEndpoint: { x: bb.x1 + 1, y: bb.y1 + 1 } }); // left side
   });
-  
+
   for (let i = 0; i < edgeArray.length; i++) {
     let edgeSource = edgeArray[i].source();
     let edgeTarget = edgeArray[i].target();
     for (var j = 0; j < nodeArray.length; j++) {
       let currentNode = nodeArray[j];
-      if(!edgeSource.same(currentNode) && !edgeTarget.same(currentNode) && 
-              edgeSource.ancestors().intersection(currentNode).length == 0 &&
-              edgeTarget.ancestors().intersection(currentNode).length == 0) {
-        let top = doIntersect(edges[i], nodeSides[j*4]); // intersection btw edge and top side
-        let right = doIntersect(edges[i], nodeSides[j*4 + 1]); // intersection btw edge and right side
-        let bottom = doIntersect(edges[i], nodeSides[j*4 + 2]); // intersection btw edge and bottom side
-        let left = doIntersect(edges[i], nodeSides[j*4 + 3]); // intersection btw edge and left side
-        if(top || right || bottom || left) {
+      if (!edgeSource.same(currentNode) && !edgeTarget.same(currentNode) &&
+        edgeSource.ancestors().intersection(currentNode).length == 0 &&
+        edgeTarget.ancestors().intersection(currentNode).length == 0) {
+        let top = doIntersect(edges[i], nodeSides[j * 4]); // intersection btw edge and top side
+        let right = doIntersect(edges[i], nodeSides[j * 4 + 1]); // intersection btw edge and right side
+        let bottom = doIntersect(edges[i], nodeSides[j * 4 + 2]); // intersection btw edge and bottom side
+        let left = doIntersect(edges[i], nodeSides[j * 4 + 3]); // intersection btw edge and left side
+        if (top || right || bottom || left) {
           overlaps++;
         }
       }
