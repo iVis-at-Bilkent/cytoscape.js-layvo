@@ -111,16 +111,58 @@ let findIntersectionPointsOf2Lines = function (l1, l2) {
 
 let findNumberOfCrosses = function (cy) {
   let crosses = 0;
-  const edges = cy.edges().map(x => { return { srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() } });
+  const r = getEdgesWithBendpoints(cy);
+  const edges = r.lines;
 
   for (let i = 0; i < edges.length; i++) {
     for (var j = i + 1; j < edges.length; j++) {
+      if (r.consequtiveLines[i] && r.consequtiveLines[i][j]) {
+        continue;
+      }
       if (doIntersect(edges[i], edges[j])) {
         crosses++;
       }
     }
   }
   return crosses;
+};
+
+let getEdgesWithBendpoints = function (cy) {
+  const r = [];
+  const edges = cy.edges();
+  const consequtiveLines = {};
+  for (let i = 0; i < edges.length; i++) {
+    const x = edges[i];
+    const sp = x.segmentPoints();
+    if (!sp) {
+      r.push({ srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() });
+    } else {
+      sp.unshift(x.sourceEndpoint());
+      sp.push(x.targetEndpoint());
+      for (let i = 0; i < sp.length - 1; i++) {
+        r.push({ srcEndpoint: sp[i], tgtEndpoint: sp[i + 1] });
+        if (i != sp.length - 2) {
+          const currIdx = r.length - 1;
+          const nextIdx = r.length;
+          if (consequtiveLines[currIdx]) {
+            consequtiveLines[currIdx][nextIdx] = true;
+          } else {
+            const o = {};
+            o[nextIdx] = true;
+            consequtiveLines[currIdx] = o;
+          }
+          if (consequtiveLines[nextIdx]) {
+            consequtiveLines[nextIdx][currIdx] = true;
+          } else {
+            const o = {};
+            o[currIdx] = true;
+            consequtiveLines[nextIdx] = o;
+          }
+        }
+      }
+    }
+  }
+  return { lines: r, consequtiveLines: consequtiveLines };
 };
 
 let doesOverlap = function (node, otherNode) {
@@ -206,6 +248,17 @@ let getTotalEdgeLength = function (cy) {
     }
     let p = edge.sourceEndpoint();
     let q = edge.targetEndpoint();
+    const sp = edge.segmentPoints();
+    if (!sp) {
+      totalLength += getDistance(p, q);
+    } else {
+      sp.unshift(p);
+      sp.push(q);
+      for (let i = 0; i < sp.length - 1; i++) {
+        totalLength += getDistance(sp[i], sp[i + 1]);
+      }
+    }
+
     totalLength += getDistance(p, q);
   }
   return totalLength;

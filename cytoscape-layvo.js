@@ -204,18 +204,58 @@ var findIntersectionPointsOf2Lines = function findIntersectionPointsOf2Lines(l1,
 
 var findNumberOfCrosses = function findNumberOfCrosses(cy) {
   var crosses = 0;
-  var edges = cy.edges().map(function (x) {
-    return { srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() };
-  });
+  var r = getEdgesWithBendpoints(cy);
+  var edges = r.lines;
 
   for (var i = 0; i < edges.length; i++) {
     for (var j = i + 1; j < edges.length; j++) {
+      if (r.consequtiveLines[i] && r.consequtiveLines[i][j]) {
+        continue;
+      }
       if (doIntersect(edges[i], edges[j])) {
         crosses++;
       }
     }
   }
   return crosses;
+};
+
+var getEdgesWithBendpoints = function getEdgesWithBendpoints(cy) {
+  var r = [];
+  var edges = cy.edges();
+  var consequtiveLines = {};
+  for (var i = 0; i < edges.length; i++) {
+    var x = edges[i];
+    var sp = x.segmentPoints();
+    if (!sp) {
+      r.push({ srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() });
+    } else {
+      sp.unshift(x.sourceEndpoint());
+      sp.push(x.targetEndpoint());
+      for (var _i = 0; _i < sp.length - 1; _i++) {
+        r.push({ srcEndpoint: sp[_i], tgtEndpoint: sp[_i + 1] });
+        if (_i != sp.length - 2) {
+          var currIdx = r.length - 1;
+          var nextIdx = r.length;
+          if (consequtiveLines[currIdx]) {
+            consequtiveLines[currIdx][nextIdx] = true;
+          } else {
+            var o = {};
+            o[nextIdx] = true;
+            consequtiveLines[currIdx] = o;
+          }
+          if (consequtiveLines[nextIdx]) {
+            consequtiveLines[nextIdx][currIdx] = true;
+          } else {
+            var _o = {};
+            _o[currIdx] = true;
+            consequtiveLines[nextIdx] = _o;
+          }
+        }
+      }
+    }
+  }
+  return { lines: r, consequtiveLines: consequtiveLines };
 };
 
 var doesOverlap = function doesOverlap(node, otherNode) {
@@ -310,6 +350,17 @@ var getTotalEdgeLength = function getTotalEdgeLength(cy) {
       }
       var p = edge.sourceEndpoint();
       var q = edge.targetEndpoint();
+      var sp = edge.segmentPoints();
+      if (!sp) {
+        totalLength += getDistance(p, q);
+      } else {
+        sp.unshift(p);
+        sp.push(q);
+        for (var i = 0; i < sp.length - 1; i++) {
+          totalLength += getDistance(sp[i], sp[i + 1]);
+        }
+      }
+
       totalLength += getDistance(p, q);
     }
   } catch (err) {
@@ -361,10 +412,10 @@ var setLayoutData4Nodes = function setLayoutData4Nodes(nodes, data, parentId) {
     data[parentId][nodesOnTheLevel[i].id()] = { x: p.x, y: p.y };
   }
   var parentNodes = nodesOnTheLevel.filter(':parent');
-  for (var _i = 0; _i < parentNodes.length; _i++) {
+  for (var _i2 = 0; _i2 < parentNodes.length; _i2++) {
     // set positions of the nodes in deeper levels recursively
-    var children = parentNodes[_i].children();
-    setLayoutData4Nodes(children, data, parentNodes[_i].id());
+    var children = parentNodes[_i2].children();
+    setLayoutData4Nodes(children, data, parentNodes[_i2].id());
   }
 };
 
