@@ -83,6 +83,8 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 module.exports = function () {
   var cy = this;
   return {
@@ -283,11 +285,7 @@ var findNumberOfOverlappingNodes = function findNumberOfOverlappingNodes(cy) {
 var findNumberOfOverlappingNodesAndEdges = function findNumberOfOverlappingNodesAndEdges(cy) {
   var overlaps = 0;
   var nodeArray = cy.nodes().toArray();
-  var edgeArray = cy.edges().toArray();
 
-  var edges = cy.edges().map(function (x) {
-    return { srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() };
-  }); // array that keeps edges
   var nodeSides = []; // array that keeps node sides, length = # of nodes * 4
   nodeArray.forEach(function (node) {
     var bb = node.boundingBox({ includeLabels: false, includeOverlays: false });
@@ -298,18 +296,37 @@ var findNumberOfOverlappingNodesAndEdges = function findNumberOfOverlappingNodes
     nodeSides.push({ srcEndpoint: { x: bb.x1 + 1, y: bb.y1 + bb.h - 1 }, tgtEndpoint: { x: bb.x1 + 1, y: bb.y1 + 1 } }); // left side
   });
 
-  for (var i = 0; i < edgeArray.length; i++) {
-    var edgeSource = edgeArray[i].source();
-    var edgeTarget = edgeArray[i].target();
+  var edgeData = cy.edges().map(function (x) {
+    var o = { src: x.source(), tgt: x.target() };
+    var sp = x.segmentPoints();
+    var points = [x.sourceEndpoint()];
+    if (sp) {
+      points.push.apply(points, _toConsumableArray(sp));
+    }
+    points.push(x.targetEndpoint());
+    var edgeLines = [];
+    for (var i = 0; i < points.length - 1; i++) {
+      edgeLines.push({ srcEndpoint: points[i], tgtEndpoint: points[i + 1] });
+    }
+    o.edgeLines = edgeLines;
+    return o;
+  });
+
+  for (var i = 0; i < edgeData.length; i++) {
+    var edgeSource = edgeData[i].src;
+    var edgeTarget = edgeData[i].tgt;
     for (var j = 0; j < nodeArray.length; j++) {
       var currentNode = nodeArray[j];
       if (!edgeSource.same(currentNode) && !edgeTarget.same(currentNode) && edgeSource.ancestors().intersection(currentNode).length == 0 && edgeTarget.ancestors().intersection(currentNode).length == 0) {
-        var top = doIntersect(edges[i], nodeSides[j * 4]); // intersection btw edge and top side
-        var right = doIntersect(edges[i], nodeSides[j * 4 + 1]); // intersection btw edge and right side
-        var bottom = doIntersect(edges[i], nodeSides[j * 4 + 2]); // intersection btw edge and bottom side
-        var left = doIntersect(edges[i], nodeSides[j * 4 + 3]); // intersection btw edge and left side
-        if (top || right || bottom || left) {
-          overlaps++;
+        for (var k = 0; k < edgeData[i].edgeLines.length; k++) {
+          var line = edgeData[i].edgeLines[k];
+          var top = doIntersect(line, nodeSides[j * 4]); // intersection btw edge and top side
+          var right = doIntersect(line, nodeSides[j * 4 + 1]); // intersection btw edge and right side
+          var bottom = doIntersect(line, nodeSides[j * 4 + 2]); // intersection btw edge and bottom side
+          var left = doIntersect(line, nodeSides[j * 4 + 3]); // intersection btw edge and left side
+          if (top || right || bottom || left) {
+            overlaps++;
+          }
         }
       }
     }

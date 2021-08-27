@@ -189,9 +189,7 @@ let findNumberOfOverlappingNodes = function (cy) {
 let findNumberOfOverlappingNodesAndEdges = function (cy) {
   let overlaps = 0;
   let nodeArray = cy.nodes().toArray();
-  let edgeArray = cy.edges().toArray();
 
-  const edges = cy.edges().map(x => { return { srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() } }); // array that keeps edges
   const nodeSides = []; // array that keeps node sides, length = # of nodes * 4
   nodeArray.forEach(function (node) {
     let bb = node.boundingBox({ includeLabels: false, includeOverlays: false });
@@ -202,20 +200,39 @@ let findNumberOfOverlappingNodesAndEdges = function (cy) {
     nodeSides.push({ srcEndpoint: { x: bb.x1 + 1, y: bb.y1 + bb.h - 1 }, tgtEndpoint: { x: bb.x1 + 1, y: bb.y1 + 1 } }); // left side
   });
 
-  for (let i = 0; i < edgeArray.length; i++) {
-    let edgeSource = edgeArray[i].source();
-    let edgeTarget = edgeArray[i].target();
-    for (var j = 0; j < nodeArray.length; j++) {
+  const edgeData = cy.edges().map((x) => {
+    const o = { src: x.source(), tgt: x.target() };
+    const sp = x.segmentPoints();
+    const points = [x.sourceEndpoint()];
+    if (sp) {
+      points.push(...sp);
+    }
+    points.push(x.targetEndpoint());
+    const edgeLines = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      edgeLines.push({ srcEndpoint: points[i], tgtEndpoint: points[i + 1] })
+    }
+    o.edgeLines = edgeLines;
+    return o;
+  });
+
+  for (let i = 0; i < edgeData.length; i++) {
+    const edgeSource = edgeData[i].src;
+    const edgeTarget = edgeData[i].tgt;
+    for (let j = 0; j < nodeArray.length; j++) {
       let currentNode = nodeArray[j];
       if (!edgeSource.same(currentNode) && !edgeTarget.same(currentNode) &&
         edgeSource.ancestors().intersection(currentNode).length == 0 &&
         edgeTarget.ancestors().intersection(currentNode).length == 0) {
-        let top = doIntersect(edges[i], nodeSides[j * 4]); // intersection btw edge and top side
-        let right = doIntersect(edges[i], nodeSides[j * 4 + 1]); // intersection btw edge and right side
-        let bottom = doIntersect(edges[i], nodeSides[j * 4 + 2]); // intersection btw edge and bottom side
-        let left = doIntersect(edges[i], nodeSides[j * 4 + 3]); // intersection btw edge and left side
-        if (top || right || bottom || left) {
-          overlaps++;
+        for (let k = 0; k < edgeData[i].edgeLines.length; k++) {
+          const line = edgeData[i].edgeLines[k];
+          const top = doIntersect(line, nodeSides[j * 4]); // intersection btw edge and top side
+          const right = doIntersect(line, nodeSides[j * 4 + 1]); // intersection btw edge and right side
+          const bottom = doIntersect(line, nodeSides[j * 4 + 2]); // intersection btw edge and bottom side
+          const left = doIntersect(line, nodeSides[j * 4 + 3]); // intersection btw edge and left side
+          if (top || right || bottom || left) {
+            overlaps++;
+          }
         }
       }
     }
