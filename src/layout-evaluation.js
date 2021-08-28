@@ -20,94 +20,73 @@ let generalProperties = function (cy) {
   };
 };
 
+class Point {
+  constructor(p) {
+    this.x = p.x;
+    this.y = p.y;
+  }
+}
+
+// Given three colinear points p, q, r, the function checks if
+// point q lies on line segment 'pr'
+let onSegment = function (p, q, r) {
+  if (q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
+    q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y))
+    return true;
+  return false;
+}
+
+// To find orientation of ordered triplet (p, q, r).
+// The function returns following values
+// 0 --> p, q and r are colinear
+// 1 --> Clockwise
+// 2 --> Counterclockwise
+let orientation = function (p, q, r) {
+  // See https://www.geeksforgeeks.org/orientation-3-ordered-points/
+  // for details of below formula.
+  let val = (q.y - p.y) * (r.x - q.x) -
+    (q.x - p.x) * (r.y - q.y);
+
+  if (val == 0) return 0; // colinear
+
+  return (val > 0) ? 1 : 2; // clock or counterclock wise
+}
+
 /** e1 and e2 are array of objects
  * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number} }[] } e1 
  * @param  { {srcEndpoint: {x: number, y:number}, tgtEndpoint: {x: number, y:number} }[] } e2 
  */
 let doIntersect = function (e1, e2) {
-  let l1 = findLineEquationFrom2Points(e1.srcEndpoint, e1.tgtEndpoint);
-  let l2 = findLineEquationFrom2Points(e2.srcEndpoint, e2.tgtEndpoint);
-  let intersectionPoint = findIntersectionPointsOf2Lines(l1, l2);
-  if (!intersectionPoint) {
-    return false;
-  }
-  if (intersectionPoint.isParallel) {
-    if (!intersectionPoint.canOverlap) {
-      return false;
-    } else {
-      return areLineSegmentsIntersect(e1, e2);
-    }
+  const p1 = new Point(e1.srcEndpoint);
+  const q1 = new Point(e1.tgtEndpoint);
+  const p2 = new Point(e2.srcEndpoint);
+  const q2 = new Point(e2.tgtEndpoint);
+  // Find the four orientations needed for general and
+  // special cases
+  let o1 = orientation(p1, q1, p2);
+  let o2 = orientation(p1, q1, q2);
+  let o3 = orientation(p2, q2, p1);
+  let o4 = orientation(p2, q2, q1);
 
-  }
-  const xRange1 = [Math.min(e1.srcEndpoint.x, e1.tgtEndpoint.x), Math.max(e1.srcEndpoint.x, e1.tgtEndpoint.x)];
-  const xRange2 = [Math.min(e2.srcEndpoint.x, e2.tgtEndpoint.x), Math.max(e2.srcEndpoint.x, e2.tgtEndpoint.x)];
-  const yRange1 = [Math.min(e1.srcEndpoint.y, e1.tgtEndpoint.y), Math.max(e1.srcEndpoint.y, e1.tgtEndpoint.y)];
-  const yRange2 = [Math.min(e2.srcEndpoint.y, e2.tgtEndpoint.y), Math.max(e2.srcEndpoint.y, e2.tgtEndpoint.y)];
-  const { x, y } = intersectionPoint;
+  // General case
+  if (o1 != o2 && o3 != o4)
+    return true;
 
-  return x >= xRange1[0] && x >= xRange2[0] && x <= xRange1[1] && x <= xRange2[1]
-    && y >= yRange1[0] && y >= yRange2[0] && y <= yRange1[1] && y <= yRange2[1];
+  // Special Cases
+  // p1, q1 and p2 are colinear and p2 lies on segment p1q1
+  if (o1 == 0 && onSegment(p1, p2, q1)) return true;
+
+  // p1, q1 and q2 are colinear and q2 lies on segment p1q1
+  if (o2 == 0 && onSegment(p1, q2, q1)) return true;
+
+  // p2, q2 and p1 are colinear and p1 lies on segment p2q2
+  if (o3 == 0 && onSegment(p2, p1, q2)) return true;
+
+  // p2, q2 and q1 are colinear and q1 lies on segment p2q2
+  if (o4 == 0 && onSegment(p2, q1, q2)) return true;
+
+  return false; // Doesn't fall in any of the above cases
 };
-
-// to check if to line segments that are from THE SAME equation (y = mx + n) intersects
-let areLineSegmentsIntersect = function (e1, e2) {
-  const x1min = Math.min(e1.srcEndpoint.x, e1.tgtEndpoint.x);
-  const x1max = Math.max(e1.srcEndpoint.x, e1.tgtEndpoint.x);
-  const x2min = Math.min(e2.srcEndpoint.x, e2.tgtEndpoint.x);
-  const x2max = Math.max(e2.srcEndpoint.x, e2.tgtEndpoint.x);
-
-  return x1max >= x2min && x2max >= x1min;
-};
-
-/** If line equation is like "y = mx + n", returns an object with type {m: number, n: number}
- * on the other hand line equation can be like x=3. In those cases returns an object like {x: number} 
- * @param  {} p1 {x: number, y: number}
- * @param  {} p2 {x: number, y: number}
- */
-let findLineEquationFrom2Points = function (p1, p2) {
-  const deltaX = p2.x - p1.x;
-  const deltaY = p2.y - p1.y;
-  if (deltaY == 0 && deltaX == 0) {
-    return null;
-  }
-  if (deltaX == 0) {
-    return { x: p1.x };
-  }
-  if (deltaY == 0) {
-    return { m: 0, n: p1.y };
-  }
-  const m = deltaY / deltaX;
-  const n = (p1.y * p2.x - p1.x * p2.y) / deltaX;
-  return { m: m, n: n };
-}
-
-/** "y = mx + n" or "x=3" are a line equaltions. Returns xy coordinates of point type {x: number, y: number}
- * @param  {} l1 {m: number, n: number}
- * @param  {} l2 {m: number, n: number}
- */
-let findIntersectionPointsOf2Lines = function (l1, l2) {
-  // if both a like lines like x=3 
-  if (l1.x && l2.x) {
-    if (l1.x == l2.x) {
-      return { x: l1.x, y: 0 };
-    }
-    return null;
-  }
-  if (l1.x) {
-    return { x: l1.x, y: l2.m * l1.x + l2.n };
-  }
-  if (l2.x) {
-    return { x: l2.x, y: l1.m * l2.x + l1.n };
-  }
-  const deltaM = l2.m - l1.m;
-  // there is no intersection between 2 lines, they are parallel
-  if (deltaM == 0) {
-    return { isParallel: true, canOverlap: l2.n == l1.n };
-  }
-  let x = (l1.n - l2.n) / deltaM;
-  let y = (l1.n * l2.m - l1.m * l2.n) / deltaM;
-  return { x: x, y: y };
-}
 
 let findNumberOfCrosses = function (cy) {
   let crosses = 0;
@@ -135,12 +114,12 @@ let getEdgesWithBendpoints = function (cy) {
     const x = edges[i];
     const sp = x.segmentPoints();
     if (!sp) {
-      r.push({ srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint() });
+      r.push({ srcEndpoint: x.sourceEndpoint(), tgtEndpoint: x.targetEndpoint(), id: x.id() });
     } else {
       sp.unshift(x.sourceEndpoint());
       sp.push(x.targetEndpoint());
       for (let i = 0; i < sp.length - 1; i++) {
-        r.push({ srcEndpoint: sp[i], tgtEndpoint: sp[i + 1] });
+        r.push({ srcEndpoint: sp[i], tgtEndpoint: sp[i + 1], id: x.id() });
         if (i != sp.length - 2) {
           const currIdx = r.length - 1;
           const nextIdx = r.length;
