@@ -275,8 +275,6 @@ let getTotalEdgeLength = function (cy) {
         totalLength += getDistance(sp[i], sp[i + 1]);
       }
     }
-
-    totalLength += getDistance(p, q);
   }
   return totalLength;
 };
