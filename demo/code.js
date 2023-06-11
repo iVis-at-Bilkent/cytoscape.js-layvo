@@ -86,37 +86,40 @@ var cy = cytoscape({
 
 var cy2 = cytoscape({
   container: document.getElementById('cy2'),
-  style: cytoscape.stylesheet()
-    .selector('node')
-      .css({
-        'background-color': '#6272A3',
-        'shape': 'rectangle',
-        'width': 'mapData(foo, 0, 10, 10, 30)',
-        'height': 'mapData(bar, 0, 10, 10, 50)',
-        'content': 'data(id)'
-      })
-    .selector('edge')
-      .css({
-        'width': 'mapData(weight, 0, 10, 3, 9)',
-        'line-color': '#B1C1F2',
-        'target-arrow-color': '#B1C1F2',
-        'target-arrow-shape': 'triangle',
-        'opacity': 0.8
-      })
-    .selector(':selected')
-      .css({
-        'background-color': 'black',
-        'line-color': 'black',
-        'target-arrow-color': 'black',
-        'source-arrow-color': 'black',
-        'opacity': 1
-      }),
+  style:  cytoscape.stylesheet()
+  .selector('node')
+    .css({
+      'background-color': '#B3767E',
+      'width': 'mapData(baz, 0, 10, 10, 40)',
+      'height': 'mapData(baz, 0, 10, 10, 40)',
+      'content': 'data(id)'
+    })
+  .selector('edge')
+    .css({
+      'line-color': '#F2B1BA',
+      'target-arrow-color': '#F2B1BA',
+      'width': 2,
+      'target-arrow-shape': 'circle',
+      'opacity': 0.8
+    })
+  .selector(':selected')
+    .css({
+      'background-color': 'black',
+      'line-color': 'black',
+      'target-arrow-color': 'black',
+      'source-arrow-color': 'black',
+      'opacity': 1
+    })
+  .selector('.faded')
+    .css({
+      'opacity': 0.25,
+      'text-opacity': 0
+    }),
 
-  elements: elesJson2,
+  elements: elesJson,
 
   layout: {
-    name: 'breadthfirst',
-    directed: true,
+    name: 'circle',
     padding: 10
   },
 
@@ -125,7 +128,7 @@ var cy2 = cytoscape({
   }
 });
 
-var api = cy.synchedLayout('get');
+var api = cy.layvo('get');
 
 let randomize = function() {
 	cy.layout({name: 'random'}).run();
