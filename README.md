@@ -52,6 +52,7 @@ Plain HTML/JS has the extension registered for you automatically, because no `re
 ## API
 - `let api = cy.layvo('get')`: get the extension instance
 - `api.generalProperties()`: get general layout metrics
+- `api.generalProperties(nodes, edges)`: get general layout metrics for the given array of nodes and edges
 - `api.differenceMetrics(cy, cy2)`: get synchronized layout similarity metrics
 
 ## Build targets
