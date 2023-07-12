@@ -1,23 +1,25 @@
 module.exports = function() {
 	let cy = this;
 	return {
-		generalProperties: ()=>{return generalProperties(cy)},
+		generalProperties: (nodes,edges)=>{
+			return generalProperties(cy,nodes,edges);
+		},
 		differenceMetrics: differenceMetrics,
 	};
 };
 
-let generalProperties = function(cy) {
-	let totalEdgeLength = getTotalEdgeLength(cy);
+let generalProperties = function(cy, nodes, edges) {
+	let totalEdgeLength = getTotalEdgeLength(cy,edges);
 	return {
-		numberOfEdgeCrosses: findNumberOfCrosses(cy),
-		numberOfNodeOverlaps: findNumberOfOverlappingNodes(cy),
-		totalArea: getTotalArea(cy),
+		numberOfEdgeCrosses: findNumberOfCrosses(cy,edges),
+		numberOfNodeOverlaps: findNumberOfOverlappingNodes(cy, nodes),
+		totalArea: getTotalArea(cy,nodes),
 		totalEdgeLength: totalEdgeLength,
-		averageEdgeLength: totalEdgeLength / cy.edges().length,
+		averageEdgeLength: edges == undefined ? totalEdgeLength / cy.edges().length : totalEdgeLength / edges.length,
 	};
 };
 
-let findNumberOfCrosses = function(cy) {
+let findNumberOfCrosses = function(cy,edges) {
 	let doesIntersect = function(a,b,c,d,p,q,r,s) {
 		var det, gamma, lambda;
 		det = (c - a) * (s - q) - (r - p) * (d - b);
@@ -31,7 +33,7 @@ let findNumberOfCrosses = function(cy) {
 	};
 
 	let crosses = 0;
-	let edgeArray = cy.edges().toArray();
+	let edgeArray = edges || cy.edges().toArray();
 
 	for (let i = 0; i < edgeArray.length; i++) {
 		var p = edgeArray[i].sourceEndpoint(), q = edgeArray[i].targetEndpoint();
@@ -45,14 +47,14 @@ let findNumberOfCrosses = function(cy) {
 	return crosses;
 };
 
-let findNumberOfOverlappingNodes = function(cy) {
+let findNumberOfOverlappingNodes = function(cy, nodes) {
 	let doesOverlap = function(node, otherNode) {
 		let bb = node.boundingBox(), bbOther = otherNode.boundingBox();
 		return !(bbOther.x1 > bb.x2 || bbOther.x2 < bb.x1 || bbOther.y1 > bb.y2 || bbOther.y2 < bb.y1);
 	};
 
 	let overlaps = 0;
-	let nodeArray = cy.nodes().toArray();
+	let nodeArray = nodes || cy.nodes().toArray();
 
 	for (let i = 0; i < nodeArray.length; i++) {
 		let node = nodeArray[i];
@@ -66,19 +68,25 @@ let findNumberOfOverlappingNodes = function(cy) {
 	return overlaps;
 };
 
-let getTotalArea = function(cy) {
-	let bb = cy.elements().boundingBox();
+let getTotalArea = function(cy,nodes) {
+	let bb = {};
+	if(nodes !== undefined){
+		bb = cy.collection(nodes).boundingBox();
+	}
+	else{
+		bb = cy.elements().boundingBox();
+	}
 	return bb.w * bb.h;
 }
 
-let getTotalEdgeLength = function(cy) {
+let getTotalEdgeLength = function(cy,edges) {
 	let getDistance = function(p, q) {
 		let dx = q.x - p.x, dy = q.y - p.y;
 		return Math.sqrt(dx * dx + dy * dy);
 	};
 
 	let totalLength = 0;
-	let edgeArray = cy.edges().toArray();
+	let edgeArray = edges || cy.edges().toArray();
 
 	for (let edge of edgeArray) {
 		let p = edge.sourceEndpoint(), q = edge.targetEndpoint();
